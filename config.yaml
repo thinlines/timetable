@@ -1,0 +1,93 @@
+classes:
+  G10:
+    courses:
+      - course_id: "001"  # Chinese
+        periods_per_week: 5
+      - course_id: "004"  # IG Math
+        periods_per_week: 4
+      - course_id: "003"  # AP Physics
+        periods_per_week: 3
+  G11:
+    courses:
+      - course_id: "002"  # AS Chemistry
+        periods_per_week: 4
+      - course_id: "007"  # AP Statistics
+        periods_per_week: 3
+      - course_id: "008"  # IG Biology
+        periods_per_week: 5
+  G12:
+    courses:
+      - course_id: "005"  # Art
+        periods_per_week: 2
+      - course_id: "006"  # Chemistry
+        periods_per_week: 4
+      - course_id: "001"  # Chinese
+        periods_per_week: 5
+
+fixed_events:
+  - day: Monday
+    period: 2
+    course: "Flag-Raising"
+  - day: Monday
+    period: 3
+    course: "Flag-Raising"
+
+# Now teacher_constraints are positive assertions:
+teacher_constraints:
+  "Mr. Huang":
+    - day: Friday
+      period: 9
+      class: G10
+      course: "AP Physics"
+  Yunfei:
+    - day: Monday
+      period: 9
+      class: G11
+      course: "IG Math"
+
+teacher_limits:
+  "Mr. Huang": 15
+  Yunfei: 15
+  Dawn: 15
+  Jessica: 15
+  Serena: 15
+  Yuanyuan: 15
+  Yingguo: 15
+
+courses:
+  - id: "001"
+    name: Chinese
+    teachers:
+      - Yingguo
+  - id: "002"
+    name: AS Chemistry
+    teachers:
+      - Jessica
+  - id: "003"
+    name: AP Physics
+    teachers:
+      - "Mr. Huang"
+  - id: "004"
+    name: IG Math
+    teachers:
+      - Yunfei
+      - Dawn
+  - id: "005"
+    name: Art
+    teachers:
+      - Yuanyuan
+  - id: "006"
+    name: Chemistry
+    teachers:
+      - Jessica
+  - id: "007"
+    name: AP Statistics
+    teachers:
+      - Yunfei
+      - Dawn
+  - id: "008"
+    name: IG Biology
+    teachers:
+      - Serena
+
+cotaught: []
