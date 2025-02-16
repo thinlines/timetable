@@ -1,36 +1,36 @@
 classes:
   G10:
     courses:
-      - course_id: "001"  # Chinese
+      - course_id: 1  # Chinese
         periods_per_week: 5
-      - course_id: "004"  # IG Math
+      - course_id: 4  # IG Math
         periods_per_week: 4
-      - course_id: "003"  # AP Physics
+      - course_id: 3  # AP Physics
         periods_per_week: 3
   G11:
     courses:
-      - course_id: "002"  # AS Chemistry
+      - course_id: 2  # AS Chemistry
         periods_per_week: 4
-      - course_id: "007"  # AP Statistics
+      - course_id: 7  # AP Statistics
         periods_per_week: 3
-      - course_id: "008"  # IG Biology
+      - course_id: 8  # IG Biology
         periods_per_week: 5
   G12:
     courses:
-      - course_id: "005"  # Art
+      - course_id: 5  # Art
         periods_per_week: 2
-      - course_id: "006"  # Chemistry
+      - course_id: 6  # Chemistry
         periods_per_week: 4
-      - course_id: "001"  # Chinese
+      - course_id: 1  # Chinese
         periods_per_week: 5
 
 fixed_events:
-  - day: Monday
-    period: 2
-    course: "Flag-Raising"
-  - day: Monday
-    period: 3
-    course: "Flag-Raising"
+  # - day: Monday
+  #   period: 2
+  #   course: "Flag-Raising"
+  # - day: Monday
+  #   period: 3
+  #   course: "Flag-Raising"
 
 # Now teacher_constraints are positive assertions:
 teacher_constraints:
@@ -55,37 +55,37 @@ teacher_limits:
   Yingguo: 15
 
 courses:
-  - id: "001"
+  - id: 1
     name: Chinese
     teachers:
       - Yingguo
-  - id: "002"
+  - id: 2
     name: AS Chemistry
     teachers:
       - Jessica
-  - id: "003"
+  - id: 3
     name: AP Physics
     teachers:
       - "Mr. Huang"
-  - id: "004"
+  - id: 4
     name: IG Math
     teachers:
       - Yunfei
       - Dawn
-  - id: "005"
+  - id: 5
     name: Art
     teachers:
       - Yuanyuan
-  - id: "006"
+  - id: 6
     name: Chemistry
     teachers:
       - Jessica
-  - id: "007"
+  - id: 7
     name: AP Statistics
     teachers:
       - Yunfei
       - Dawn
-  - id: "008"
+  - id: 8
     name: IG Biology
     teachers:
       - Serena
