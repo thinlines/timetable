@@ -2,11 +2,18 @@
 import yaml
 import sys
 import pandas as pd
+import random
 
 # --- Data Structures and Helpers ---
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 PERIODS = list(range(1, 10))  # 9 periods per day
+
+# Define limits for courses (if not specified here, no limit applies)
+# For example, Chinese is limited to 2 lessons per day and no more than 2 consecutive periods.
+COURSE_DAILY_LIMIT = {"Chinese": 2}
+
+CONSECUTIVE_LIMIT = {"Chinese": 2}
 
 
 def all_timeslots():
@@ -18,9 +25,7 @@ def all_timeslots():
 
 
 def teacher_available(
-    teacher,
-    day,
-    period, global_assignments, teacher_limits, default_teacher_limit
+    teacher, day, period, global_assignments, teacher_limits, default_teacher_limit
 ):
     # Ensure teacher is not scheduled elsewhere at the same time.
     if (day, period) in global_assignments.get(teacher, []):
@@ -31,6 +36,64 @@ def teacher_available(
     ):
         return False
     return True
+
+
+def teacher_course_daily_count(teacher, course, day, timetables):
+    count = 0
+    for class_schedule in timetables.values():
+        for timeslot, assignment in class_schedule.items():
+            if timeslot[0] == day and assignment is not None:
+                if (
+                    assignment.get("teacher") == teacher
+                    and assignment.get("course") == course
+                ):
+                    count += 1
+    return count
+
+
+def teacher_daily_limit_ok(teacher, course, day, timetables, course_daily_limits):
+    # If the course has a daily limit, ensure the teacher hasn't reached it.
+    limit = course_daily_limits.get(course)
+    if limit is None:
+        return True
+    count = teacher_course_daily_count(teacher, course, day, timetables)
+    return count < limit
+
+
+def teacher_consecutive_assignment_ok(
+    teacher, course, day, period, timetables, consecutive_limits
+):
+    # Check if assigning at this period would cause too many consecutive lessons of the same course.
+    limit = consecutive_limits.get(course)
+    if limit is None:
+        return True
+    # Collect all periods in the given day where the teacher is assigned to this course.
+    assigned_periods = []
+    for p in PERIODS:
+        for schedule in timetables.values():
+            entry = schedule.get((day, p))
+            if (
+                entry is not None
+                and entry.get("teacher") == teacher
+                and entry.get("course") == course
+            ):
+                assigned_periods.append(p)
+                break  # found an assignment for this period; no need to check further
+    # Simulate adding the current period.
+    if period not in assigned_periods:
+        assigned_periods.append(period)
+    assigned_periods.sort()
+    # Count the maximum number of consecutive periods.
+    max_streak = 1
+    current_streak = 1
+    for i in range(1, len(assigned_periods)):
+        if assigned_periods[i] == assigned_periods[i - 1] + 1:
+            current_streak += 1
+            max_streak = max(max_streak, current_streak)
+        else:
+            current_streak = 1
+    return max_streak <= limit
+
 
 # --- Modified schedule_timetables ---
 def schedule_timetables(
@@ -69,7 +132,6 @@ def schedule_timetables(
     global_assignments = {}
 
     # Preassign teacher constraints (positive fixed assignments).
-    # Now each constraint is expected to include 'class' and 'course'.
     for teacher, constraints in teacher_constraints.items():
         for constraint in constraints:
             class_name = constraint["class"]
@@ -116,19 +178,20 @@ def schedule_timetables(
                     }
                 )
 
-    # Backtracking algorithm (unchanged except for calling teacher_available with new args).
+    # Backtracking algorithm with additional course constraints.
     def backtrack(task_index, tasks, timetables, global_assignments):
         if task_index == len(tasks):
             return True  # All tasks scheduled
         task = tasks[task_index]
         class_name = task["class"]
 
-        # Gather free timeslots (skip fixed assignments).
+        # Gather free timeslots (skip fixed assignments) and randomize order for fairness.
         available_slots = [
             timeslot
             for timeslot, current in timetables[class_name].items()
             if current is None
         ]
+        random.shuffle(available_slots)
 
         # Sort candidate teachers by current load.
         candidate_teachers = sorted(
@@ -138,6 +201,7 @@ def schedule_timetables(
         for slot in available_slots:
             day, period = slot
             for teacher in candidate_teachers:
+                # Check overall teacher availability.
                 if not teacher_available(
                     teacher,
                     day,
@@ -145,6 +209,18 @@ def schedule_timetables(
                     global_assignments,
                     teacher_limits,
                     default_teacher_limit,
+                ):
+                    continue
+
+                # New constraint: limit number of times a teacher can teach a particular course on a day.
+                if not teacher_daily_limit_ok(
+                    teacher, task["course"], day, timetables, COURSE_DAILY_LIMIT
+                ):
+                    continue
+
+                # New constraint: limit consecutive assignments of the same course.
+                if not teacher_consecutive_assignment_ok(
+                    teacher, task["course"], day, period, timetables, CONSECUTIVE_LIMIT
                 ):
                     continue
 
@@ -193,7 +269,9 @@ def schedule_timetables(
     else:
         return None
 
+
 # --- Excel Output using Pandas with a Multi-Level Index ---
+
 
 def output_to_excel_pandas(timetables, filename="timetable.xlsx"):
     """
@@ -225,7 +303,9 @@ def output_to_excel_pandas(timetables, filename="timetable.xlsx"):
     df.to_excel(filename)
     print(f"Timetable exported to {filename} using pandas.")
 
+
 # --- Main Program ---
+
 
 def main():
     try:
@@ -238,7 +318,9 @@ def main():
     teacher_constraints = config.get("teacher_constraints", {})
     cotaught = config.get("cotaught", [])
     courses_config = config.get("courses", [])
-    teacher_limits = config.get("teacher_limits", {})  # Optional teacher capacity overrides
+    teacher_limits = config.get(
+        "teacher_limits", {}
+    )  # Optional teacher capacity overrides
     default_teacher_limit = 24  # Default maximum periods per week per teacher
 
     timetable = schedule_timetables(
@@ -248,6 +330,7 @@ def main():
         cotaught,
         teacher_limits,
         default_teacher_limit,
+        fixed_events=config.get("fixed_events"),
     )
     if timetable:
         # Optionally print the timetable to the console.
@@ -271,6 +354,7 @@ def main():
         output_to_excel_pandas(timetable)
     else:
         print("No valid timetable configuration found with the given constraints.")
+
 
 if __name__ == "__main__":
     main()
