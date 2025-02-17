@@ -1,3 +1,71 @@
+teachers:
+  - id: 1
+    name: "Yingguo"
+  - id: 2
+    name: "Jessica"
+  - id: 3
+    name: "Mr. Huang"
+  - id: 4
+    name: "Yunfei"
+  - id: 5
+    name: "Yuanyuan"
+  - id: 6
+    name: "Serena"
+  - id: 7
+    name: "Ricardo"
+  - id: 8
+    name: "Maia"
+  - id: 9
+    name: "Med"
+  - id: 10
+    name: "Carol"
+  - id: 11
+    name: "Mr. Kou"
+
+courses:
+  - id: 1
+    name: "Chinese"
+    teacher_id: 1
+  - id: 2
+    name: "AS Chemistry"
+    teacher_id: 2
+  - id: 3
+    name: "AP Physics"
+    teacher_id: 3
+  - id: 4
+    name: "IG Math"
+    teacher_id: 4
+  - id: 5
+    name: "Art"
+    teacher_id: 5
+  - id: 6
+    name: "Chemistry"
+    teacher_id: 2
+  - id: 7
+    name: "AP Statistics"
+    teacher_id: 4
+  - id: 8
+    name: "IG Biology"
+    teacher_id: 6
+  - id: 9
+    name: "FT PE"
+    teacher_id: 7
+  - id: 10
+    name: "IELTS"
+    teacher_id: 9
+  - id: 11
+    name: "English"
+    teacher_id: 10
+  - id: 12
+    name: "US History"
+    teacher_id: 9
+  - id: 13
+    name: "PE"
+    teacher_id: 11
+  - id: 14
+    name: "Physics"
+    teacher_id: 3
+
 classes:
   G10:
     courses:
@@ -15,7 +83,7 @@ classes:
         periods_per_week: 3
       - course_id: 11  # English
         periods_per_week: 5
-      - course_id: 12  # US Hist
+      - course_id: 12  # US History
         periods_per_week: 1
       - course_id: 5   # Art
         periods_per_week: 6
@@ -27,10 +95,10 @@ classes:
         periods_per_week: 6
   G11:
     courses:
-    - course_id: 2  # AS Chemistry
-      periods_per_week: 4
-    - course_id: 7  # AP Statistics
-      periods_per_week: 3
+      - course_id: 2  # AS Chemistry
+        periods_per_week: 4
+      - course_id: 7  # AP Statistics
+        periods_per_week: 3
   G12:
     courses:
       - course_id: 5  # Art
@@ -40,96 +108,31 @@ classes:
       - course_id: 1  # Chinese
         periods_per_week: 5
 
-fixed_events:
-  # - day: Monday
-  #   period: 2
-  #   course: "Flag-Raising"
-  # - day: Monday
-  #   period: 3
-  #   course: "Flag-Raising"
+fixed_events: []
 
-# Now teacher_constraints are positive assertions:
 teacher_constraints:
   "Mr. Huang":
     - day: Friday
       period: 9
       class: G10
       course: "AP Physics"
-  Yunfei:
+  "Yunfei":
     - day: Monday
       period: 9
       class: G11
       course: "IG Math"
 
 teacher_limits:
-  "Mr. Huang": 15
-  Yunfei: 15
-  Dawn: 15
-  Jessica: 15
-  Serena: 15
-  Yuanyuan: 15
-  Yingguo: 15
-  Ricardo: 15
-  Maia: 15
-  Med: 15
+  1: 15
+  2: 15
+  3: 15
+  4: 15
+  5: 15
+  6: 15
+  7: 15
+  8: 15
+  9: 15
+  10: 15
+  11: 15
 
-courses:
-  - id: 1
-    name: Chinese
-    teachers:
-      - Yingguo
-  - id: 2
-    name: AS Chemistry
-    teachers:
-      - Jessica
-  - id: 3
-    name: AP Physics
-    teachers:
-      - "Mr. Huang"
-  - id: 4
-    name: IG Math
-    teachers:
-      - Yunfei
-  - id: 5
-    name: Art
-    teachers:
-      - Yuanyuan
-  - id: 6
-    name: Chemistry
-    teachers:
-      - Jessica
-  - id: 7
-    name: AP Statistics
-    teachers:
-      - Yunfei
-      - Dawn
-  - id: 8
-    name: IG Biology
-    teachers:
-      - Serena
-  - id: 9
-    name: FT PE
-    teachers:
-      - Ricardo
-      - Maia
-  - id: 10
-    name: IELTS
-    teachers:
-      - Med
-  - id: 11
-    name: English
-    teachers:
-      - Carol
-  - id: 12
-    name: US History
-    teachers:
-      - Med
-  - id: 13
-    name: PE
-    teachers:
-     - Mr. Kou
-  - id: 14
-    name: Physics
-    teachers:
-      - Mr. Huang
 cotaught: []
