@@ -109,6 +109,15 @@ System should handle data similar to the provided YAML structure:
 - Test data and scenarios for development/testing
 - Export templates and styling
 
+## OR-Tools Transition
+The repository now includes a proof-of-concept scheduler built on
+[Google OR-Tools](https://developers.google.com/optimization).  Run
+`python3 timetable_ortools.py` to generate a timetable using the
+CP-SAT solver.  The model currently implements only basic constraints
+(one course per period, one class per teacher period, and course
+frequency requirements) but serves as a foundation for further
+optimisation work.
+
 ## Success Metrics
 - Complete schedule generation without manual intervention
 - All graduation requirements satisfied
