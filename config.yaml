@@ -76,7 +76,7 @@ classes:
       - course_id: 4  # IG Math
         periods_per_week: 6
       - course_id: 6  # Chemistry
-        periods_per_week: 5
+        periods_per_week: 4
       - course_id: 9  # FT PE
         periods_per_week: 1
       - course_id: 10  # IELTS
