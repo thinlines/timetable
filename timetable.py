@@ -9,7 +9,8 @@ def main() -> None:
     cfg = load_config()
     timetable = solve_timetable(cfg)
     output_timetable(timetable)
-    output_teacher_schedule(timetable, "Serena")
+    for teacher in cfg["teachers"]:
+        output_teacher_schedule(timetable, teacher["name"])
 
 
 if __name__ == "__main__":
