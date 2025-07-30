@@ -25,6 +25,49 @@ def load_config(filename: str = "config.yaml") -> Dict:
         return yaml.safe_load(f)
 
 
+def validate_config(config: Dict) -> Tuple[Dict[str, int], Dict[int, int]]:
+    """Validate per-class and per-teacher period totals.
+
+    Returns dictionaries mapping class names and teacher ids to the total
+    requested periods.  Raises ``ValueError`` if any class or teacher exceeds
+    the available capacity defined in the configuration.
+    """
+
+    total_slots = len(DAYS) * len(PERIODS)
+
+    # Build lookups
+    courses = {c["id"]: c for c in config.get("courses", [])}
+    teacher_names = {t["id"]: t["name"] for t in config.get("teachers", [])}
+
+    class_totals: Dict[str, int] = {}
+    for class_name, class_info in config.get("classes", {}).items():
+        total = sum(c.get("periods_per_week", 0) for c in class_info.get("courses", []))
+        class_totals[class_name] = total
+        if total > total_slots:
+            raise ValueError(
+                f"Class {class_name} requests {total} periods but only {total_slots} slots are available"
+            )
+
+    teacher_totals: Dict[int, int] = collections.defaultdict(int)
+    for class_info in config.get("classes", {}).values():
+        for course in class_info.get("courses", []):
+            course_id = course["course_id"]
+            periods = course.get("periods_per_week", 0)
+            teacher_id = courses[course_id]["teacher_id"]
+            teacher_totals[teacher_id] += periods
+
+    limits = config.get("teacher_limits", {})
+    for teacher_id, total in teacher_totals.items():
+        limit = limits.get(teacher_id)
+        if limit is not None and total > limit:
+            name = teacher_names.get(teacher_id, str(teacher_id))
+            raise ValueError(
+                f"Teacher {name} assigned {total} periods which exceeds the limit of {limit}"
+            )
+
+    return class_totals, dict(teacher_totals)
+
+
 def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, str, int], cp_model.IntVar]]:
     model = cp_model.CpModel()
 
@@ -94,10 +137,24 @@ def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, st
 
 
 def solve_timetable(config: Dict):
+    class_totals, teacher_totals = validate_config(config)
     model, vars_ = build_model(config)
     solver = cp_model.CpSolver()
     status = solver.Solve(model)
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        print("Requested periods per class:")
+        for cls, total in class_totals.items():
+            print(f"  {cls}: {total} / {len(DAYS) * len(PERIODS)}")
+
+        teacher_names = {t["id"]: t["name"] for t in config.get("teachers", [])}
+        print("Requested periods per teacher:")
+        for tid, total in teacher_totals.items():
+            name = teacher_names.get(tid, str(tid))
+            limit = config.get("teacher_limits", {}).get(tid)
+            if limit is not None:
+                print(f"  {name}: {total} / {limit}")
+            else:
+                print(f"  {name}: {total}")
         raise RuntimeError("No feasible schedule found")
 
     # Build timetable dict similar to timetable.py

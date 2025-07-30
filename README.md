@@ -124,3 +124,13 @@ optimisation work.
 - Teacher workload constraints respected
 - Intuitive user adoption by scheduling team
 - Significant time savings over current spreadsheet method
+
+## Understanding Validation Errors
+`timetable_ortools.py` performs basic sanity checks before building the CP-SAT
+model. Each class may request at most `len(DAYS) * len(PERIODS)` periods per
+week and teachers may have optional limits defined in `teacher_limits`.
+
+If these limits are exceeded, the script raises a `ValueError` naming the class
+or teacher and showing the offending totals. When the solver cannot find a
+feasible timetable, it prints the same totals for all classes and teachers so
+you can quickly locate over-subscribed resources.
