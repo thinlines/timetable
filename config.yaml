@@ -1,138 +1,224 @@
 teachers:
   - id: 1
-    name: "Yingguo"
+    name: "Xu Yingguo"         # G10 Chinese
   - id: 2
-    name: "Jessica"
+    name: "Liu Weiyun"         # G11 Chinese
   - id: 3
-    name: "Mr. Huang"
+    name: "Qu Xiaoyu"          # G12 Chinese
   - id: 4
-    name: "Yunfei"
+    name: "Jessica"            # Chemistry / AS Chem
   - id: 5
-    name: "Yuanyuan"
+    name: "Huang Tongyun"      # Physics / AS Physics
   - id: 6
-    name: "Serena"
+    name: "Yunfei"             # IG Math, AP Stat, Further Math
   - id: 7
-    name: "Ricardo"
+    name: "Feng Yuanyuan"      # Art
   - id: 8
-    name: "Maia"
+    name: "Serena"             # IG Biology
   - id: 9
-    name: "Med"
+    name: "William"            # IG Economics / AP Economics
   - id: 10
-    name: "Carol"
+    name: "Carol"              # English
   - id: 11
-    name: "Mr. Kou"
+    name: "Jenny"              # EL / Debate / West‑Culture
+  - id: 12
+    name: "Zora"               # IELTS
+  - id: 13
+    name: "Dawn"               # AS Math
+  - id: 14
+    name: "Randy"              # Literature & Culture
+  - id: 15
+    name: "Chen Gaili"         # World History (Bil.)
+  - id: 16
+    name: "Wang Jing"          # World Geography (Bil.)
+  - id: 17
+    name: "Liang Qingzhu"      # Study‑Hour / generic PE cover
 
+# ----------  COURSES  ----------
 courses:
   - id: 1
-    name: "Chinese"
+    name: "Chinese (G10)"
     teacher_id: 1
   - id: 2
-    name: "AS Chemistry"
+    name: "Chinese (G11)"
     teacher_id: 2
   - id: 3
-    name: "AP Physics"
+    name: "Chinese (G12)"
     teacher_id: 3
   - id: 4
-    name: "IG Math"
+    name: "AS Chemistry"
     teacher_id: 4
   - id: 5
-    name: "Art"
-    teacher_id: 5
-  - id: 6
     name: "Chemistry"
-    teacher_id: 2
-  - id: 7
-    name: "AP Statistics"
     teacher_id: 4
+  - id: 6
+    name: "AS Physics"
+    teacher_id: 5
+  - id: 7
+    name: "Physics"
+    teacher_id: 5
   - id: 8
-    name: "IG Biology"
+    name: "IG Math"
     teacher_id: 6
   - id: 9
-    name: "FT PE"
-    teacher_id: 7
+    name: "Further Math"
+    teacher_id: 6
   - id: 10
-    name: "IELTS"
-    teacher_id: 9
+    name: "AP Statistics"
+    teacher_id: 6
   - id: 11
+    name: "AS Math"
+    teacher_id: 13
+  - id: 12
+    name: "IG Biology"
+    teacher_id: 8
+  - id: 13
+    name: "IG Economics"
+    teacher_id: 9
+  - id: 14
+    name: "AP Economics"
+    teacher_id: 9
+  - id: 15
+    name: "Art"
+    teacher_id: 7
+  - id: 16
     name: "English"
     teacher_id: 10
-  - id: 12
-    name: "US History"
-    teacher_id: 9
-  - id: 13
-    name: "PE"
+  - id: 17
+    name: "IELTS"
+    teacher_id: 12
+  - id: 18
+    name: "EL (Extensive Reading)"
     teacher_id: 11
-  - id: 14
-    name: "Physics"
-    teacher_id: 3
+  - id: 19
+    name: "Debate"
+    teacher_id: 11
+  - id: 20
+    name: "Western Culture"
+    teacher_id: 11
+  - id: 21
+    name: "Literature & Culture"
+    teacher_id: 14
+  - id: 22
+    name: "World History (Bil.)"
+    teacher_id: 15
+  - id: 23
+    name: "World Geography (Bil.)"
+    teacher_id: 16
+  - id: 24
+    name: "PE"
+    teacher_id: 17
+  - id: 25
+    name: "FT PE"
+    teacher_id: 17
+  - id: 26
+    name: "SAT Prep"
+    teacher_id: 11
 
 classes:
   G10:
     courses:
-      - course_id: 8  # IG Biology
+      - course_id: 12   # IG Biology
         periods_per_week: 6
-      - course_id: 1  # Chinese
-        periods_per_week: 1
-      - course_id: 4  # IG Math
+      - course_id: 13   # IG Economics
         periods_per_week: 6
-      - course_id: 6  # Chemistry
-        periods_per_week: 4
-      - course_id: 9  # FT PE
-        periods_per_week: 1
-      - course_id: 10  # IELTS
-        periods_per_week: 3
-      - course_id: 11  # English
+      - course_id: 8    # IG Math
         periods_per_week: 5
-      - course_id: 12  # US History
+      - course_id: 5    # Chemistry
+        periods_per_week: 5
+      - course_id: 7    # Physics
+        periods_per_week: 5
+      - course_id: 1    # Chinese (G10)
         periods_per_week: 1
-      - course_id: 5   # Art
-        periods_per_week: 6
-      - course_id: 13
+      - course_id: 16   # English
         periods_per_week: 3
-      - course_id: 3
+      - course_id: 17   # IELTS
         periods_per_week: 3
-      - course_id: 14
+      - course_id: 15   # Art
         periods_per_week: 6
+      - course_id: 24   # PE
+        periods_per_week: 3
+      - course_id: 25   # FT PE (Friday assembly run)
+        periods_per_week: 1
+      - course_id: 22   # US/World History (bil.)
+        periods_per_week: 1
+
   G11:
     courses:
-      - course_id: 2  # AS Chemistry
-        periods_per_week: 4
-      - course_id: 7  # AP Statistics
+      - course_id: 4    # AS Chemistry
         periods_per_week: 3
+      - course_id: 6    # AS Physics
+        periods_per_week: 4
+      - course_id: 8    # IG Math
+        periods_per_week: 7
+      - course_id: 9    # Further Math
+        periods_per_week: 4
+      - course_id: 13   # IG Economics
+        periods_per_week: 5
+      - course_id: 12   # IG Biology
+        periods_per_week: 2
+      - course_id: 15   # Art
+        periods_per_week: 2
+      - course_id: 2    # Chinese (G11)
+        periods_per_week: 1
+      - course_id: 17   # IELTS
+        periods_per_week: 2
+      - course_id: 24   # PE
+        periods_per_week: 3
+      - course_id: 22   # World History (Bil.)
+        periods_per_week: 1
+      - course_id: 23   # World Geography (Bil.)
+        periods_per_week: 1
+
   G12:
     courses:
-      - course_id: 5  # Art
+      - course_id: 10   # AP Statistics
+        periods_per_week: 6
+      - course_id: 6    # AP Physics
+        periods_per_week: 3
+      - course_id: 14   # AP Economics
+        periods_per_week: 3
+      - course_id: 3    # Chinese (G12)
+        periods_per_week: 1
+      - course_id: 15   # Art
         periods_per_week: 2
-      - course_id: 6  # Chemistry
-        periods_per_week: 4
-      - course_id: 1  # Chinese
-        periods_per_week: 5
+      - course_id: 24   # PE
+        periods_per_week: 3
+      - course_id: 18   # EL
+        periods_per_week: 2
+      - course_id: 19   # Debate
+        periods_per_week: 3
+      - course_id: 20   # Western Culture
+        periods_per_week: 1
+      - course_id: 21   # Literature & Culture
+        periods_per_week: 2
+      - course_id: 26   # SAT Prep
+        periods_per_week: 2
 
+# ----------  FIXED EVENTS  ----------
+# (Currently none – Friday 7th‑period Art for all grades is already baked into requirements.)
 fixed_events: []
 
-teacher_constraints:
-  3:
-    - day: Friday
-      period: 9
-      class: G10
-      course: 3
-  4:
-    - day: Monday
-      period: 9
-      class: G11
-      course: 4
+# ----------  TEACHER CONSTRAINTS  ----------
+# No extra “can’t‑teach” slots needed: school day ends after period 7 on Friday.
+teacher_constraints: {}
 
+# ----------  TEACHING LOAD LIMITS  ----------
 teacher_limits:
-  1: 15
-  2: 15
-  3: 15
-  4: 15
-  5: 15
-  6: 15
-  7: 15
-  8: 15
-  9: 15
-  10: 15
-  11: 15
-
-cotaught: []
+  1: 24
+  2: 24
+  3: 24
+  4: 24
+  5: 24
+  6: 24
+  7: 24
+  8: 24
+  9: 24
+  10: 24
+  11: 24
+  12: 24
+  13: 24
+  14: 24
+  15: 24
+  16: 24
+  17: 24
