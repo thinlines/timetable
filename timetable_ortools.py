@@ -176,10 +176,3 @@ def solve_timetable(config: Dict):
     return timetables
 
 
-if __name__ == "__main__":
-    cfg = load_config()
-    timetable = solve_timetable(cfg)
-    # Reuse output_timetable from timetable.py for printing if available
-    from timetable import output_timetable
-
-    output_timetable(timetable)
