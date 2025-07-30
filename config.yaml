@@ -111,16 +111,16 @@ classes:
 fixed_events: []
 
 teacher_constraints:
-  "Mr. Huang":
+  3:
     - day: Friday
       period: 9
       class: G10
-      course: "AP Physics"
-  "Yunfei":
+      course: 3
+  4:
     - day: Monday
       period: 9
       class: G11
-      course: "IG Math"
+      course: 4
 
 teacher_limits:
   1: 15
