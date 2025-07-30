@@ -8,7 +8,7 @@ teachers:
   - id: 4
     name: "Jessica"            # Chemistry / AS Chem
   - id: 5
-    name: "Huang Tongyun"      # Physics / AS Physics
+    name: "Huang Tongyun"      # AS Physics
   - id: 6
     name: "Yunfei"             # IG Math, AP Stat, Further Math
   - id: 7
@@ -32,7 +32,11 @@ teachers:
   - id: 16
     name: "Wang Jing"          # World Geography (Bil.)
   - id: 17
-    name: "Liang Qingzhu"      # Study‑Hour / generic PE cover
+    name: "Liang Qingzhu"      # Physics (General)
+  - id: 18
+    name: "Kou Jinlong"        # PE
+  - id: 19
+    name: "Pedro Maia"         # FT PE
 
 # ----------  COURSES  ----------
 courses:
@@ -56,7 +60,7 @@ courses:
     teacher_id: 5
   - id: 7
     name: "Physics"
-    teacher_id: 5
+    teacher_id: 17        # now taught by Liang Qingzhu
   - id: 8
     name: "IG Math"
     teacher_id: 6
@@ -100,17 +104,17 @@ courses:
     name: "Literature & Culture"
     teacher_id: 14
   - id: 22
-    name: "World History (Bil.)"
+    name: "British History"
     teacher_id: 15
   - id: 23
     name: "World Geography (Bil.)"
     teacher_id: 16
   - id: 24
     name: "PE"
-    teacher_id: 17
+    teacher_id: 18        # now taught by Kou Jinlong
   - id: 25
     name: "FT PE"
-    teacher_id: 17
+    teacher_id: 19        # now taught by Pedro Maia
   - id: 26
     name: "SAT Prep"
     teacher_id: 11
@@ -138,7 +142,7 @@ classes:
         periods_per_week: 6
       - course_id: 24   # PE
         periods_per_week: 3
-      - course_id: 25   # FT PE (Friday assembly run)
+      - course_id: 25   # FT PE
         periods_per_week: 1
       - course_id: 22   # US/World History (bil.)
         periods_per_week: 1
@@ -146,29 +150,29 @@ classes:
   G11:
     courses:
       - course_id: 4    # AS Chemistry
-        periods_per_week: 3
+        periods_per_week: 9
       - course_id: 6    # AS Physics
-        periods_per_week: 4
-      - course_id: 8    # IG Math
         periods_per_week: 7
       - course_id: 9    # Further Math
-        periods_per_week: 4
+        periods_per_week: 9
       - course_id: 13   # IG Economics
-        periods_per_week: 5
-      - course_id: 12   # IG Biology
         periods_per_week: 2
       - course_id: 15   # Art
-        periods_per_week: 2
+        periods_per_week: 7
       - course_id: 2    # Chinese (G11)
-        periods_per_week: 1
+        periods_per_week: 4
       - course_id: 17   # IELTS
         periods_per_week: 2
       - course_id: 24   # PE
         periods_per_week: 3
-      - course_id: 22   # World History (Bil.)
+      - course_id: 22   # British History
         periods_per_week: 1
       - course_id: 23   # World Geography (Bil.)
         periods_per_week: 1
+      - course_id: 25   # FT PE
+        periods_per_week: 1
+      - course_id: 11   # AS Math
+        periods_per_week: 6
 
   G12:
     courses:
@@ -191,9 +195,11 @@ classes:
       - course_id: 20   # Western Culture
         periods_per_week: 1
       - course_id: 21   # Literature & Culture
-        periods_per_week: 2
+        periods_per_week: 5
       - course_id: 26   # SAT Prep
         periods_per_week: 2
+      - course_id: 25   # FT PE
+        periods_per_week: 1
 
 # ----------  FIXED EVENTS  ----------
 # (Currently none – Friday 7th‑period Art for all grades is already baked into requirements.)
