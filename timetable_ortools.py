@@ -40,8 +40,8 @@ def validate_config(config: Dict) -> Tuple[Dict[str, int], Dict[int, int]]:
     teacher_names = {t["id"]: t["name"] for t in config.get("teachers", [])}
 
     class_totals: Dict[str, int] = {}
-    for class_name, class_info in config.get("classes", {}).items():
-        total = sum(c.get("periods_per_week", 0) for c in class_info.get("courses", []))
+    for class_name, class_info in config.get("course_requirements", {}).items():
+        total = sum(c.get("periods_per_week", 0) for c in class_info)
         class_totals[class_name] = total
         if total > total_slots:
             raise ValueError(
@@ -49,8 +49,8 @@ def validate_config(config: Dict) -> Tuple[Dict[str, int], Dict[int, int]]:
             )
 
     teacher_totals: Dict[int, int] = collections.defaultdict(int)
-    for class_info in config.get("classes", {}).values():
-        for course in class_info.get("courses", []):
+    for class_info in config.get("course_requirements", {}).values():
+        for course in class_info:
             course_id = course["course_id"]
             periods = course.get("periods_per_week", 0)
             teacher_id = courses[course_id]["teacher_id"]
@@ -74,8 +74,8 @@ def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, st
     # Map (class, course, day, period) -> binary variable
     variables: Dict[Tuple[str, int, str, int], cp_model.IntVar] = {}
 
-    for class_name, class_info in config["classes"].items():
-        for course in class_info.get("courses", []):
+    for class_name, courses in config["course_requirements"].items():
+        for course in courses:
             course_id = course["course_id"]
             for day in DAYS:
                 for period in PERIODS:
@@ -83,13 +83,13 @@ def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, st
                     variables[(class_name, course_id, day, period)] = model.NewBoolVar(var_name)
 
     # Each class can only have one course in a period
-    for class_name in config["classes"]:
+    for class_name in config["course_requirements"]:
         for day in DAYS:
             for period in PERIODS:
                 model.Add(
                     sum(
                         variables[(class_name, c["course_id"], day, period)]
-                        for c in config["classes"][class_name].get("courses", [])
+                        for c in config["course_requirements"][class_name]
                     )
                     <= 1
                 )
@@ -97,8 +97,8 @@ def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, st
     # Teachers teach at most one class per period
     teacher_courses: Dict[int, List[Tuple[str, int]]] = collections.defaultdict(list)
     courses = {c["id"]: c for c in config.get("courses", [])}
-    for class_name, class_info in config["classes"].items():
-        for course in class_info.get("courses", []):
+    for class_name, courses in config["course_requirements"].items():
+        for course in courses:
             course_id = course["course_id"]
             teacher_id = courses[course_id]["teacher_id"]
             teacher_courses[teacher_id].append((class_name, course_id))
@@ -115,7 +115,7 @@ def build_model(config: Dict) -> Tuple[cp_model.CpModel, Dict[Tuple[str, int, st
                 )
 
     # Course frequency requirements
-    for class_name, class_info in config["classes"].items():
+    for class_name, class_info in config["course_requirements"].items():
         for course in class_info.get("courses", []):
             course_id = course["course_id"]
             periods = course["periods_per_week"]
@@ -160,7 +160,7 @@ def solve_timetable(config: Dict):
     # Build timetable dict similar to timetable.py
     timetables = {
         class_name: {(day, period): None for day in DAYS for period in PERIODS}
-        for class_name in config["classes"]
+        for class_name in config["course_requirements"]
     }
 
     courses = {c["id"]: c for c in config.get("courses", [])}

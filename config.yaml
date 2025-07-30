@@ -227,86 +227,82 @@ courses:
     name: "SAT Prep"
     teacher_id: 11
 
-classes:
-  G10:
-    courses:
-      - course_id: 12   # IG Biology
-        periods_per_week: 6
-      - course_id: 13   # IG Economics
-        periods_per_week: 6
-      - course_id: 8    # IG Math
-        periods_per_week: 5
-      - course_id: 5    # Chemistry
-        periods_per_week: 5
-      - course_id: 7    # Physics
-        periods_per_week: 5
-      - course_id: 1    # Chinese (G10)
-        periods_per_week: 1
-      - course_id: 16   # English
-        periods_per_week: 3
-      - course_id: 17   # IELTS
-        periods_per_week: 3
-      - course_id: 15   # Art
-        periods_per_week: 6
-      - course_id: 24   # PE
-        periods_per_week: 3
-      - course_id: 25   # FT PE
-        periods_per_week: 1
-      - course_id: 22   # US/World History (bil.)
-        periods_per_week: 1
-
-  G11:
-    courses:
-      - course_id: 4    # AS Chemistry
-        periods_per_week: 9
-      - course_id: 6    # AS Physics
-        periods_per_week: 7
-      - course_id: 9    # Further Math
-        periods_per_week: 9
-      - course_id: 13   # IG Economics
-        periods_per_week: 2
-      - course_id: 15   # Art
-        periods_per_week: 7
-      - course_id: 2    # Chinese (G11)
-        periods_per_week: 4
-      - course_id: 17   # IELTS
-        periods_per_week: 2
-      - course_id: 24   # PE
-        periods_per_week: 3
-      - course_id: 22   # British History
-        periods_per_week: 1
-      - course_id: 23   # World Geography (Bil.)
-        periods_per_week: 1
-      - course_id: 25   # FT PE
-        periods_per_week: 1
-      - course_id: 11   # AS Math
-        periods_per_week: 6
-  G12:
-    courses:
-      - course_id: 10   # AP Statistics
-        periods_per_week: 6
-      - course_id: 6    # AP Physics
-        periods_per_week: 3
-      - course_id: 14   # AP Economics
-        periods_per_week: 3
-      - course_id: 3    # Chinese (G12)
-        periods_per_week: 1
-      - course_id: 15   # Art
-        periods_per_week: 2
-      - course_id: 24   # PE
-        periods_per_week: 3
-      - course_id: 18   # EL
-        periods_per_week: 2
-      - course_id: 19   # Debate
-        periods_per_week: 3
-      - course_id: 20   # Western Culture
-        periods_per_week: 1
-      - course_id: 21   # Literature & Culture
-        periods_per_week: 5
-      - course_id: 26   # SAT Prep
-        periods_per_week: 2
-      - course_id: 25   # FT PE
-        periods_per_week: 1
+course_requirements:
+  10:
+    - course_id: 12   # IG Biology
+      periods_per_week: 6
+    - course_id: 13   # IG Economics
+      periods_per_week: 6
+    - course_id: 8    # IG Math
+      periods_per_week: 5
+    - course_id: 5    # Chemistry
+      periods_per_week: 5
+    - course_id: 7    # Physics
+      periods_per_week: 5
+    - course_id: 1    # Chinese (G10)
+      periods_per_week: 1
+    - course_id: 16   # English
+      periods_per_week: 3
+    - course_id: 17   # IELTS
+      periods_per_week: 3
+    - course_id: 15   # Art
+      periods_per_week: 6
+    - course_id: 24   # PE
+      periods_per_week: 3
+    - course_id: 25   # FT PE
+      periods_per_week: 1
+    - course_id: 22   # US/World History (bil.)
+      periods_per_week: 1
+  11:
+    - course_id: 4    # AS Chemistry
+      periods_per_week: 9
+    - course_id: 6    # AS Physics
+      periods_per_week: 7
+    - course_id: 9    # Further Math
+      periods_per_week: 9
+    - course_id: 13   # IG Economics
+      periods_per_week: 2
+    - course_id: 15   # Art
+      periods_per_week: 7
+    - course_id: 2    # Chinese (G11)
+      periods_per_week: 4
+    - course_id: 17   # IELTS
+      periods_per_week: 2
+    - course_id: 24   # PE
+      periods_per_week: 3
+    - course_id: 22   # British History
+      periods_per_week: 1
+    - course_id: 23   # World Geography (Bil.)
+      periods_per_week: 1
+    - course_id: 25   # FT PE
+      periods_per_week: 1
+    - course_id: 11   # AS Math
+      periods_per_week: 6
+  12:
+    - course_id: 10   # AP Statistics
+      periods_per_week: 6
+    - course_id: 6    # AP Physics
+      periods_per_week: 3
+    - course_id: 14   # AP Economics
+      periods_per_week: 3
+    - course_id: 3    # Chinese (G12)
+      periods_per_week: 1
+    - course_id: 15   # Art
+      periods_per_week: 2
+    - course_id: 24   # PE
+      periods_per_week: 3
+    - course_id: 18   # EL
+      periods_per_week: 2
+    - course_id: 19   # Debate
+      periods_per_week: 3
+    - course_id: 20   # Western Culture
+      periods_per_week: 1
+    - course_id: 21   # Literature & Culture
+      periods_per_week: 5
+    - course_id: 26   # SAT Prep
+      periods_per_week: 2
+    - course_id: 25   # FT PE
+      periods_per_week: 1
 
 # ----------  FIXED EVENTS  ----------
 # (Currently none – Friday 7th‑period Art for all grades is already baked into requirements.)
