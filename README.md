@@ -1,136 +1,172 @@
-# Timetable System Project Specification
+# School Timetabling System
 
 ## Project Overview
-Let's lay out the groundwork for a comprehensive timetable management system for a Chinese K-12 school to replace their current manual, spreadsheet-based scheduling system. The system should handle complex scheduling constraints across multiple departments with different educational tracks.
 
-## School Structure
-- **Primary School (PS)**: Grades 1-6
-- **Junior High (JH)**: Grades 7-9 (compulsory education)
-- **Senior High (SH)**: Grades 10-12
-  - **International Track**: British A Level system, IGCSE compressed to 1 year (Grade 10)
-  - **National Track**: Gaokao-focused curriculum
+This is a timetabling system designed for an international A-Level school with grades 10-12. The system automates the complex process of scheduling courses, teachers, and students while respecting various constraints and preferences.
 
-## Technical Requirements
+## School Context
 
-### Platform & Technology
-- **Language Options**: Python or JavaScript/TypeScript
-  - Research constraint solver libraries (Google OR-Tools mentioned as potential option)
-  - Choose based on best available timetabling/constraint solving libraries
-- **Deployment**: Easy local network hosting or purely local execution
-- **OS Support**: Windows, Mac, Linux (minimum Linux support required)
-- **Interface**: Web-based with intuitive GUI for schedule generation, requirement editing, and adjustments
+**Academic Structure:**
+- International A-Level curriculum (students need 5 A-grades to matriculate)
+- Grades 10-12 (approximately 30-40 students total in college-prep program)
+- 10-15 teachers, mix of international and local staff
+- 5-day week schedule with 9 periods per day (8 on Friday)
+- 18-21 weeks per term
 
-### Architecture Considerations
-- Complete or partial replacement for current spreadsheet system
-- MVP focus on JH-SH departments initially
-- Single semester planning scope
-- Export capability: PDF format preferred (avoid spreadsheet export to prevent manual editing)
+**Daily Schedule:**
+- Morning study hour: 7:30-7:55 AM
+- 9 regular periods: 40 minutes each with 10-minute breaks
+- Special events: Monday flag ceremony (8:50 AM), Friday homeroom meeting (4:00-4:30 PM)
+- Lunch break: 11:40-1:30 PM
+- Evening study hours: 6:30-9:00 PM
+- Friday ends one period early
 
-## Scheduling Complexity & Constraints
+**Key Constraints:**
+- Students grouped by homeroom by default, split only when necessary
+- Teachers have 24-period weekly limit (most use much less)
+- International teachers cannot teach first or last periods
+- Class size maximum: 24 students
+- Electives typically scheduled in last two periods (4:10-5:40 PM)
+- Some courses benefit from consecutive 90-minute double periods
 
-### Class Structure
-- **坐班 (Fixed Classroom)**: Students stay in homeroom, teachers rotate - primary model
-- **走班 (Student Mobile)**: Students move for specific subjects - secondary model
-- **Period Structure**:
-  - JH/SH: 9 periods/day, 40-minute periods starting 8:00 AM
-  - PS: Shorter day, mix of 30/40-minute periods
-  - Different schedules for Monday (flag ceremony, study hours) and Friday (homeroom meeting)
-  - Study hours: Monday 7:20 AM and 6:30-9:00 PM
+## Database Schema
 
-### Teacher Constraints
-- **Workload Limits**: 
-  - Contractual maximum: 24 periods/week
-  - Practical ideal: ≤15 periods/week (especially for JH-SH cross-teachers)
-- **Shift Assignments**: Morning shift, evening shift, foreign teacher shift
-  - Foreign teachers: Cannot start before 8:30 AM or finish after 5:30 PM
-  - Evening/morning study supervisors: Avoid consecutive late-early scheduling
-- **Cross-Department Teaching**: 
-  - Some teachers work JH-SH
-  - PE/Art/Music teachers cross ALL departments (PS-JH-SH) - major scheduling challenge
+Refer to schema.SQL for a description of the database schema.
 
-### Student & Class Constraints
-- **Class Size**: Maximum 24 students per class/homeroom
-- **Homeroom Assignment**: Tied to homeroom teacher, default classroom location
-- **Group Splitting**: Some classes split into ability groups requiring simultaneous different subjects
-- **Student-Mobile Classes**: Default to keeping homeroom groups together when possible
+### Core Tables
 
-### Campus Layout
-- Multiple buildings (college-style campus)
-- **SH International**: 5 rooms, 5th floor Building 9
-- **JH**: 4 rooms each on 3 floors, Building 19  
-- **PS**: Buildings 4-5, 5-8 rooms per floor across 5 floors
-- Special rooms: Labs, computer rooms, offices (MVP will ignore room scheduling)
+**students**
+- Basic student information
+- Links to homeroom
+- Grade level (10, 11, 12)
 
-## Functional Requirements
+**teachers**
+- Teacher information with international flag
+- Department associations (JSONB)
+- Period preferences and availability (JSONB)
+- Contractual hour limits
 
-### Core Features (MVP)
-1. **Schedule Generation**: Complete timetable satisfying graduation requirements and constraints
-2. **Constraint Management**: Input/edit teacher limitations, course requirements, fixed events
-3. **Conflict Resolution**: Handle impossible scenarios with error messages and suggestions
-4. **Schedule Adjustment**: Easy modification system (ideally drag-and-drop GUI)
-5. **Export**: PDF generation with print-friendly formatting
+**courses**
+- Course details with periods per week requirement
+- Mandatory/elective flags
+- Grade level eligibility (JSONB)
+- Facility requirements
 
-### Success Criteria Priority
-1. **Graduation Requirements**: All curriculum requirements met
-2. **Constraint Satisfaction**: Teacher limits, room capacity, timing restrictions
-3. **Teacher Satisfaction**: Avoid problematic distributions (e.g., all periods one day, none for two days)
-4. **Minimal Conflicts**: Optimize for smooth operation
+**homerooms**
+- Physical homeroom spaces
+- Grade level association
+- Capacity limits
 
-### User Experience
-- **Primary Users**: Scheduling team (MVP)
-- **Future Users**: Teachers (schedule access/printing)
-- **Interface**: Intuitive GUI for non-technical users
-- **Adjustment Capability**: Easy constraint modification and schedule tweaking
+**facilities**
+- Labs, gyms, courts, fields
+- Capacity and splitting capabilities
+- Facility type categorization
 
-## Data Structure Reference
-System should handle data similar to the provided YAML structure:
-- Teachers with IDs and constraints
-- Courses with teacher assignments and period requirements
-- Classes with course allocations
-- Fixed events and time-specific constraints
-- Teacher workload limits and availability
+### Scheduling Tables
 
-## Implementation Timeline
-- **Deadline**: 1 month from project start
-- **Rollout Strategy**: Limited scope deployment (JH-SH focus)
-- **Scope**: Single semester planning initially
+**time_periods**
+- Defines the weekly schedule structure
+- Handles Monday's different pattern and Friday's early dismissal
+- Special event periods (ceremonies, meetings)
 
-## Key Technical Challenges
-1. **Multi-department Scheduling**: Especially PE/Art/Music across PS-JH-SH with different period lengths
-2. **Constraint Solver Selection**: Research and implement appropriate algorithm/library
-3. **User Interface Design**: Balance power with simplicity for non-technical users
-4. **Schedule Optimization**: Balance hard constraints with teacher satisfaction
-5. **Real-time Adjustment**: Efficient constraint modification and re-solving
+**class_sections**
+- Groups students into teachable class sizes
+- Links courses to specific sections
 
-## Git Repository Structure Recommendations
-- Clear separation of constraint solver engine, data models, and UI components
-- Configuration files for school-specific parameters
-- Documentation for constraint definition and system operation
-- Test data and scenarios for development/testing
-- Export templates and styling
+**scheduled_classes**
+- The actual timetable: links sections, teachers, facilities, and time slots
+- Handles consecutive period requirements
+- Semester-specific scheduling
 
-## OR-Tools Transition
-The repository now includes a proof-of-concept scheduler built on
-[Google OR-Tools](https://developers.google.com/optimization).  Run
-`python3 timetable_ortools.py` to generate a timetable using the
-CP-SAT solver.  The model currently implements only basic constraints
-(one course per period, one class per teacher period, and course
-frequency requirements) but serves as a foundation for further
-optimisation work.
+**class_enrollments**
+- Student enrollment in specific scheduled classes
 
-## Success Metrics
-- Complete schedule generation without manual intervention
-- All graduation requirements satisfied
-- Teacher workload constraints respected
-- Intuitive user adoption by scheduling team
-- Significant time savings over current spreadsheet method
+### Association Tables
 
-## Understanding Validation Errors
-`timetable_ortools.py` performs basic sanity checks before building the CP-SAT
-model. Each class may request at most `len(DAYS) * len(PERIODS)` periods per
-week and teachers may have optional limits defined in `teacher_limits`.
+**teacher_courses** - Which teachers can teach which courses
+**student_courses** - Which courses each student is taking
+**study_hour_assignments** - Study hall supervision assignments
 
-If these limits are exceeded, the script raises a `ValueError` naming the class
-or teacher and showing the offending totals. When the solver cannot find a
-feasible timetable, it prints the same totals for all classes and teachers so
-you can quickly locate over-subscribed resources.
+## Design Principles
+
+### Simplicity Over Complexity
+- **Uniform Course Treatment**: Different course levels (e.g., "Chemistry A" vs "Chemistry B") are separate course entities rather than variants of one course
+- **No Special A/B Logic**: The scheduling algorithm treats all courses identically
+- **Standard Relational Design**: Avoids complex hierarchies or special-case logic
+
+### Constraint Satisfaction Approach
+The timetabling problem is essentially a constraint satisfaction problem (CSP) with:
+
+**Hard Constraints:**
+- Teacher availability and hour limits
+- Facility capacity and conflicts  
+- Student course requirements
+- International teacher time restrictions
+
+**Soft Constraints (Preferences):**
+- Keep homeroom classmates together
+- Teacher preferred time slots
+- Consecutive periods for specific courses
+- Elective scheduling in preferred slots
+
+### Flexible Data Model
+- **JSONB Usage**: For arrays and structured data (teacher departments, grade levels, preferences)
+- **Semester Support**: All scheduling tables are semester-aware
+- **Extensible Constraints**: Generic constraint storage for future requirements
+
+## Technical Stack
+
+**Database**: PostgreSQL with JSONB for structured data
+**Application**: Python-based (framework TBD - likely Flask/FastAPI for web, tkinter/PyQt for desktop)
+**Algorithm**: Constraint satisfaction with optimization libraries (likely OR-Tools or similar)
+
+## Current Development Status
+
+✅ **Completed:**
+- Database schema design and validation
+- Sample data structure with real school data
+- Core entity relationships established
+
+🔄 **In Progress:**
+- Data population scripts
+- Basic application architecture planning
+
+📋 **Planned:**
+- Constraint satisfaction algorithm implementation  
+- Web interface development
+- Report generation (individual schedules, master timetable)
+- Export capabilities (CSV, PDF, HTML)
+
+## Key Stakeholders
+
+**Primary Users:**
+- Scheduling administrator (main user)
+- Teachers (schedule viewing)
+- Students (schedule viewing)
+
+**Export Requirements:**
+- Individual teacher schedules
+- Individual student schedules  
+- Master administrative timetable
+- Multiple formats: spreadsheet, CSV, HTML, PDF
+
+## Sample Data Context
+
+The system includes real sample data representing:
+- 13 teachers (mix of international/local, various departments)
+- ~18 courses across subjects like Chemistry, Physics, Math, English, Chinese, Art, PE
+- Variable course loads (1-6 periods per week)
+- Grade-specific course requirements
+- Specialized facilities (labs, gym, courts, field)
+
+## Scheduling Complexity
+
+**Teacher Switching Pattern**: Some leveled courses require teachers to alternate between student groups across periods to ensure all students receive required instruction.
+
+**Facility Management**: Limited specialized spaces (5 small rooms, labs, gym, outdoor facilities) require careful coordination.
+
+**Mixed Grade Classes**: Some courses can accommodate multiple grade levels, adding flexibility but complexity to grouping.
+
+**International Constraints**: Approximately 40% of teachers are international with specific availability restrictions.
+
+This system replaces a manual spreadsheet-based scheduling process and aims to optimize both educational outcomes and administrative efficiency while maintaining the flexibility needed for a small international school environment.
