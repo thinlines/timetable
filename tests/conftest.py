@@ -19,7 +19,7 @@ def db_env(monkeypatch):
         with conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "TRUNCATE TABLE students, teachers, courses, time_periods, class_sections, facilities RESTART IDENTITY CASCADE;"
+                    "TRUNCATE TABLE students, teachers, courses, time_periods, class_sections, facilities, scheduled_classes, class_enrollments RESTART IDENTITY CASCADE;"
                 )
     finally:
         conn.close()
