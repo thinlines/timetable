@@ -56,3 +56,21 @@ def display_students():
     """Print the students table to stdout."""
     for row in get_students():
         print(row)
+
+
+def add_student(student_id: int, name: str, grade_level: int):
+    """Insert a new student and return the created row (id, student_id, name, grade_level)."""
+    sql = """
+        INSERT INTO students (student_id, name, grade_level)
+        VALUES (%s, %s, %s)
+        RETURNING id, student_id, name, grade_level;
+    """
+    conn = get_connection()
+    try:
+        with conn:  # commits on success, rollbacks on exception
+            with conn.cursor() as cur:
+                cur.execute(sql, (student_id, name, grade_level))
+                row = cur.fetchone()
+                return row
+    finally:
+        conn.close()
