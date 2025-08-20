@@ -170,3 +170,15 @@ The system includes real sample data representing:
 **International Constraints**: Approximately 40% of teachers are international with specific availability restrictions.
 
 This system replaces a manual spreadsheet-based scheduling process and aims to optimize both educational outcomes and administrative efficiency while maintaining the flexibility needed for a small international school environment.
+## Development Setup
+
+The project provides helper functions in `db.py` to initialise the PostgreSQL schema and read data from the database.
+
+```python
+from db import init_db, display_students
+
+init_db()            # create tables using schema.sql
+display_students()   # print student records
+```
+
+Tests rely on a running PostgreSQL instance. Locally ensure the server is available and the `POSTGRES_*` environment variables are set. The CI workflow uses a PostgreSQL service container so tests run automatically.
