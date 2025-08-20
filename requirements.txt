@@ -1,3 +1,5 @@
 pyyaml
 ortools
 pytest
+
+psycopg2-binary

@@ -1,0 +1,58 @@
+import os
+import psycopg2
+
+
+def get_connection():
+    """Create a new database connection using environment variables."""
+    conn = psycopg2.connect(
+        dbname=os.environ.get("POSTGRES_DB", "postgres"),
+        user=os.environ.get("POSTGRES_USER", "postgres"),
+        password=os.environ.get("POSTGRES_PASSWORD", "postgres"),
+        host=os.environ.get("POSTGRES_HOST", "localhost"),
+        port=os.environ.get("POSTGRES_PORT", 5432),
+    )
+    conn.autocommit = True
+    return conn
+
+
+def init_db():
+    """Initialise the database using the schema.sql file."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;")
+    statement = ""
+    with open("schema.sql") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("--"):
+                continue
+            if line.startswith("SET ") or line.startswith("SELECT pg_catalog"):
+                continue
+            statement += " " + line
+            if line.endswith(";"):
+                if "OWNER TO" in statement:
+                    statement = ""
+                    continue
+                try:
+                    cur.execute(statement)
+                except psycopg2.Error:
+                    pass
+                statement = ""
+    cur.close()
+    conn.close()
+
+
+def get_students():
+    """Return all students from the database."""
+    conn = get_connection()
+    with conn.cursor() as cur:
+        cur.execute("SELECT id, student_id, name, grade_level FROM students")
+        rows = cur.fetchall()
+    conn.close()
+    return rows
+
+
+def display_students():
+    """Print the students table to stdout."""
+    for row in get_students():
+        print(row)
