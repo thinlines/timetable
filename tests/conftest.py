@@ -13,11 +13,13 @@ def db_env(monkeypatch):
     monkeypatch.setenv("POSTGRES_HOST", "localhost")
     monkeypatch.setenv("POSTGRES_PORT", "5432")
     init_db()
-    # clean table between tests (adjust table name if needed)
+    # clean tables between tests
     conn = get_connection()
     try:
         with conn:
             with conn.cursor() as cur:
-                cur.execute("TRUNCATE TABLE students RESTART IDENTITY CASCADE;")
+                cur.execute(
+                    "TRUNCATE TABLE students, teachers, courses, time_periods, class_sections, facilities RESTART IDENTITY CASCADE;"
+                )
     finally:
         conn.close()
