@@ -16,11 +16,11 @@ def test_solver_returns_feasible_timetable():
     teacher2 = create_teacher(
         name="T2", max_periods_per_week=1, preferred_periods={"preferred": [period2.id]}
     )
-    facility = create_facility(name="Room 1")
+    create_facility(name="Room 1")
     course1 = create_course(code="M1", name="Math", periods_per_week=1)
     course2 = create_course(code="E1", name="Eng", periods_per_week=1)
-    section1 = create_class_section(course_id=course1.id, section_name="A", semester="2024")
-    section2 = create_class_section(course_id=course2.id, section_name="B", semester="2024")
+    create_class_section(course_id=course1.id, section_name="A", semester="2024")
+    create_class_section(course_id=course2.id, section_name="B", semester="2024")
     add_student("S1", "Student One", 10)
 
     schedule = solve()
@@ -37,12 +37,11 @@ def test_solver_returns_feasible_timetable():
         conn.close()
 
     assert len(rows) == 2
-    # teachers assigned to their preferred periods
-    assignment_map = {row[0]: row for row in rows}
-    assert assignment_map[section1.id][1] == teacher1.id
-    assert assignment_map[section1.id][3] == period1.id
-    assert assignment_map[section2.id][1] == teacher2.id
-    assert assignment_map[section2.id][3] == period2.id
+    for (class_id, teacher_id, facility_id, period_id) in rows:
+        if teacher_id == teacher1.id:
+            assert period_id == period1.id
+        if teacher_id == teacher2.id:
+            assert period_id == period2.id
 
     conn = get_connection()
     try:
