@@ -139,7 +139,7 @@ def solve() -> List[Dict[str, int]]:
             for f in facilities:
                 for p in periods:
                     v = vars[(c[0], t[0], f[0], p[0])]
-                    if p[0] not in pref_periods:
+                    if pref_periods and p[0] not in pref_periods:
                         penalty_terms.append(v)
     if penalty_terms:
         model.Minimize(sum(penalty_terms))
