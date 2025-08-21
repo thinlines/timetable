@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
+import json
 
 from db import get_connection
 
@@ -50,9 +51,9 @@ def create_teacher(
                         max_periods_per_week,
                         is_international,
                         can_supervise_study_hours,
-                        departments,
-                        preferred_periods,
-                        unavailable_periods,
+                        json.dumps(departments) if isinstance(departments, dict) else departments,
+                        json.dumps(preferred_periods) if isinstance(preferred_periods, dict) else preferred_periods,
+                        json.dumps(unavailable_periods) if isinstance(unavailable_periods, dict) else unavailable_periods,
                         notes,
                     ),
                 )
