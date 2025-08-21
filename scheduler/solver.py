@@ -66,6 +66,26 @@ def solve() -> List[Dict[str, int]]:
     facilities = _fetch_all("facilities", ["id"])
     periods = _fetch_all("time_periods", ["id"])
 
+    # pre-parse teacher preferred periods so we can reference them in multiple
+    # constraint sections.  ``preferred_periods`` is stored as JSON in the DB
+    # and may come back either as a JSON string or an already decoded Python
+    # object.  Normalising it here makes the subsequent model building logic
+    # clearer and avoids repeatedly parsing the JSON inside nested loops.
+    teacher_pref_periods: Dict[int, set[int]] = {}
+    for t in teachers:
+        pref_periods: set[int] = set()
+        if t[2]:
+            try:
+                data = coerce_json(t[2])
+                if isinstance(data, dict):
+                    pref_periods = set(data.get("preferred", []))
+                elif isinstance(data, list):
+                    pref_periods = set(data)
+            except json.JSONDecodeError:
+                # Ignore invalid JSON – treat as having no preferred periods.
+                pass
+        teacher_pref_periods[t[0]] = pref_periods
+
     model = cp_model.CpModel()
 
     vars: Dict[Assignment, cp_model.IntVar] = {}
@@ -126,23 +146,39 @@ def solve() -> List[Dict[str, int]]:
     penalty_terms = []
     for c in class_sections:
         for t in teachers:
-            pref_periods = set()
-            if t[2]:
-                try:
-                    data = coerce_json(t[2])
-                    if isinstance(data, dict):
-                        pref_periods = set(data.get("preferred", []))
-                    elif isinstance(data, list):
-                        pref_periods = set(data)
-                except json.JSONDecodeError:
-                    pass
+            pref_periods = teacher_pref_periods.get(t[0], set())
             for f in facilities:
                 for p in periods:
                     v = vars[(c[0], t[0], f[0], p[0])]
-                    if p[0] not in pref_periods:
+                    # Penalise assignments that fall outside the teacher's
+                    # preferred periods.  If a teacher has not specified any
+                    # preferences we simply do not add the variable to the
+                    # objective.
+                    if pref_periods and p[0] not in pref_periods:
                         penalty_terms.append(v)
     if penalty_terms:
         model.Minimize(sum(penalty_terms))
+
+    # Harder encouragement: if a teacher has listed preferred periods, force all
+    # of their assignments to come from that set.  This still allows teachers
+    # without preferences to be scheduled in any period while ensuring that the
+    # solver honours stated preferences when possible.
+    for t in teachers:
+        pref_periods = teacher_pref_periods.get(t[0], set())
+        if pref_periods:
+            total_assignments = []
+            preferred_assignments = []
+            for c in class_sections:
+                for f in facilities:
+                    for p in periods:
+                        v = vars[(c[0], t[0], f[0], p[0])]
+                        total_assignments.append(v)
+                        if p[0] in pref_periods:
+                            preferred_assignments.append(v)
+            # Require that any assignment for this teacher uses a preferred
+            # period.  If the teacher isn't assigned at all this equality still
+            # holds as both sides will be zero.
+            model.Add(sum(total_assignments) == sum(preferred_assignments))
 
     solver = cp_model.CpSolver()
     result = solver.Solve(model)
