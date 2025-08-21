@@ -4,9 +4,8 @@ import json
 from typing import Dict, List, Tuple
 
 from ortools.sat.python import cp_model
-
 from db import get_connection
-
+from scheduler.utils import coerce_json
 
 Assignment = Tuple[int, int, int, int]  # class_section_id, teacher_id, facility_id, period_id
 
@@ -130,7 +129,7 @@ def solve() -> List[Dict[str, int]]:
             pref_periods = set()
             if t[2]:
                 try:
-                    data = t[2]
+                    data = coerce_json(t[2])
                     if isinstance(data, dict):
                         pref_periods = set(data.get("preferred", []))
                     elif isinstance(data, list):
