@@ -130,7 +130,7 @@ def solve() -> List[Dict[str, int]]:
             pref_periods = set()
             if t[2]:
                 try:
-                    data = json.loads(t[2])
+                    data = t[2]
                     if isinstance(data, dict):
                         pref_periods = set(data.get("preferred", []))
                     elif isinstance(data, list):
@@ -166,3 +166,4 @@ def solve() -> List[Dict[str, int]]:
 
     _store_schedule(assignments)
     return schedule
+

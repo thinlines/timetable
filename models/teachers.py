@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
+from psycopg2.extras import Json
 
 from db import get_connection
 
@@ -50,9 +51,9 @@ def create_teacher(
                         max_periods_per_week,
                         is_international,
                         can_supervise_study_hours,
-                        departments,
-                        preferred_periods,
-                        unavailable_periods,
+                        Json(departments) if departments is not None else None,
+                        Json((preferred_periods)) if preferred_periods is not None else None,
+                        Json(unavailable_periods) if unavailable_periods is not None else None,
                         notes,
                     ),
                 )
