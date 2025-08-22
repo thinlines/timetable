@@ -182,3 +182,21 @@ display_students()   # print student records
 ```
 
 Tests rely on a running PostgreSQL instance. Locally ensure the server is available and the `POSTGRES_*` environment variables are set. The CI workflow uses a PostgreSQL service container so tests run automatically.
+
+## Command Line Interface
+
+The project includes a small CLI in `cli.py` for interacting with the database
+and scheduling logic:
+
+```bash
+# Initialise the schema and sample data for a semester
+python cli.py populate-db --semester 2024-fall
+
+# Generate a schedule for a semester
+python cli.py run-solver --semester 2024-fall
+
+# Export the schedule in CSV or JSON format
+python cli.py export-schedule --semester 2024-fall --format csv
+```
+
+Use the `--format` option to choose the output format (`csv` or `json`).
