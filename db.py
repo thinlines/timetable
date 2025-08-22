@@ -4,7 +4,7 @@ from typing import Optional
 import psycopg2
 
 
-def get_connection():
+def get_connection(autocommit=False):
     """Create a new database connection using environment variables."""
     conn = psycopg2.connect(
         dbname=os.environ.get("POSTGRES_DB", "postgres"),
