@@ -13,35 +13,40 @@ def get_connection():
         host=os.environ.get("POSTGRES_HOST", "localhost"),
         port=os.environ.get("POSTGRES_PORT", 5432),
     )
-    conn.autocommit = True
+    # Ensure callers manage transactions explicitly
+    conn.autocommit = False
     return conn
 
 
 def init_db():
     """Initialise the database using the schema.sql file."""
     conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;")
-    statement = ""
-    with open("schema.sql") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("--"):
-                continue
-            if line.startswith("SET ") or line.startswith("SELECT pg_catalog"):
-                continue
-            statement += " " + line
-            if line.endswith(";"):
-                if "OWNER TO" in statement:
-                    statement = ""
-                    continue
-                try:
-                    cur.execute(statement)
-                except psycopg2.Error:
-                    pass
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+                )
                 statement = ""
-    cur.close()
-    conn.close()
+                with open("schema.sql") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("--"):
+                            continue
+                        if line.startswith("SET ") or line.startswith("SELECT pg_catalog"):
+                            continue
+                        statement += " " + line
+                        if line.endswith(";"):
+                            if "OWNER TO" in statement:
+                                statement = ""
+                                continue
+                            try:
+                                cur.execute(statement)
+                            except psycopg2.Error:
+                                pass
+                            statement = ""
+    finally:
+        conn.close()
 
 
 def get_students():
