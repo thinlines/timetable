@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from ortools.sat.python import cp_model
 from repository import (
@@ -10,6 +10,7 @@ from repository import (
     fetch_facilities,
     fetch_periods,
     fetch_teachers,
+    fetch_teacher_course_map,
     persist_schedule,
 )
 from scheduler.utils import coerce_json
@@ -17,86 +18,128 @@ from scheduler.utils import coerce_json
 
 def solve() -> List[Dict[str, int]]:
     """Solve the timetable problem and return the in-memory schedule."""
-    class_sections = fetch_class_sections()
+    # Data
+    # class_sections: (section_id, periods_per_week, course_id)
+    class_sections: List[Tuple[int, int, int]] = fetch_class_sections()
     teachers = fetch_teachers()
     facilities = fetch_facilities()
     periods = fetch_periods()
+    eligibility_map = fetch_teacher_course_map()  # course_id -> {teacher_id}
+    has_eligibility = bool(eligibility_map)
 
     model = cp_model.CpModel()
 
-    vars: Dict[Assignment, cp_model.IntVar] = {}
-    for c in class_sections:
-        for t in teachers:
-            for f in facilities:
-                for p in periods:
-                    vars[(c[0], t[0], f[0], p[0])] = model.NewBoolVar(
-                        f"c{c[0]}_t{t[0]}_f{f[0]}_p{p[0]}"
-                    )
+    # Utility to get eligible teachers for a course
+    def eligible_teachers(course_id: int):
+        if not has_eligibility:
+            return teachers
+        allowed = eligibility_map.get(course_id)
+        if not allowed:
+            # If eligibility data exists but none listed for this course, allow all
+            return teachers
+        return [t for t in teachers if t[0] in allowed]
 
-    # each class scheduled exactly once
-    for c in class_sections:
-        model.Add(
-            sum(
-                vars[(c[0], t[0], f[0], p[0])]
-                for t in teachers
-                for f in facilities
-                for p in periods
-            )
-            == 1
-        )
+    # Decision vars include a meeting index m in [0, periods_per_week)
+    # Key: (section_id, meeting_idx, teacher_id, facility_id, period_id)
+    vars: Dict[Tuple[int, int, int, int, int], cp_model.IntVar] = {}
+    for (sec_id, ppw, course_id) in class_sections:
+        elig_teachers = eligible_teachers(course_id)
+        for m in range(ppw):
+            for t in elig_teachers:
+                for f in facilities:
+                    for p in periods:
+                        vars[(sec_id, m, t[0], f[0], p[0])] = model.NewBoolVar(
+                            f"c{sec_id}_m{m}_t{t[0]}_f{f[0]}_p{p[0]}"
+                        )
 
-    # teacher load limits and one class per period
-    for t in teachers:
-        model.Add(
-            sum(
-                vars[(c[0], t[0], f[0], p[0])]
-                for c in class_sections
-                for f in facilities
-                for p in periods
+    # Each meeting of each section scheduled exactly once
+    for (sec_id, ppw, course_id) in class_sections:
+        elig_teachers = eligible_teachers(course_id)
+        for m in range(ppw):
+            model.Add(
+                sum(
+                    vars[(sec_id, m, t[0], f[0], p[0])]
+                    for t in elig_teachers
+                    for f in facilities
+                    for p in periods
+                )
+                == 1
             )
-            <= t[1]
-        )
+
+    # No two meetings of the same section in the same period
+    for (sec_id, ppw, course_id) in class_sections:
+        elig_teachers = eligible_teachers(course_id)
         for p in periods:
             model.Add(
                 sum(
-                    vars[(c[0], t[0], f[0], p[0])]
-                    for c in class_sections
+                    vars[(sec_id, m, t[0], f[0], p[0])]
+                    for m in range(ppw)
+                    for t in elig_teachers
                     for f in facilities
                 )
                 <= 1
             )
 
-    # facility conflicts
+    # Teacher load limits and one class per period
+    for t in teachers:
+        # Weekly load
+        model.Add(
+            sum(
+                vars[(sec_id, m, t[0], f[0], p[0])]
+                for (sec_id, ppw, course_id) in class_sections
+                for m in range(ppw)
+                for f in facilities
+                for p in periods
+                if (not has_eligibility) or (t[0] in eligibility_map.get(course_id, set())) or (course_id not in eligibility_map)
+            )
+            <= t[1]
+        )
+        # One class per period
+        for p in periods:
+            model.Add(
+                sum(
+                    vars[(sec_id, m, t[0], f[0], p[0])]
+                    for (sec_id, ppw, course_id) in class_sections
+                    for m in range(ppw)
+                    for f in facilities
+                    if (not has_eligibility) or (t[0] in eligibility_map.get(course_id, set())) or (course_id not in eligibility_map)
+                )
+                <= 1
+            )
+
+    # Facility conflicts
     for f in facilities:
         for p in periods:
             model.Add(
                 sum(
-                    vars[(c[0], t[0], f[0], p[0])]
-                    for c in class_sections
-                    for t in teachers
+                    vars[(sec_id, m, t[0], f[0], p[0])]
+                    for (sec_id, ppw, course_id) in class_sections
+                    for m in range(ppw)
+                    for t in (eligible_teachers(course_id) if has_eligibility else teachers)
                 )
                 <= 1
             )
 
     # soft constraint: teacher preferred periods
     penalty_terms = []
-    for c in class_sections:
-        for t in teachers:
-            pref_periods = set()
-            if t[2]:
-                try:
-                    data = coerce_json(t[2])
-                    if isinstance(data, dict):
-                        pref_periods = set(data.get("preferred", []))
-                    elif isinstance(data, list):
-                        pref_periods = set(data)
-                except json.JSONDecodeError:
-                    pass
-            for f in facilities:
-                for p in periods:
-                    v = vars[(c[0], t[0], f[0], p[0])]
-                    if pref_periods and p[0] not in pref_periods:
-                        penalty_terms.append(v)
+    for (sec_id, ppw, course_id) in class_sections:
+        for m in range(ppw):
+            for t in eligible_teachers(course_id):
+                pref_periods = set()
+                if t[2]:
+                    try:
+                        data = coerce_json(t[2])
+                        if isinstance(data, dict):
+                            pref_periods = set(data.get("preferred", []))
+                        elif isinstance(data, list):
+                            pref_periods = set(data)
+                    except json.JSONDecodeError:
+                        pass
+                for f in facilities:
+                    for p in periods:
+                        v = vars[(sec_id, m, t[0], f[0], p[0])]
+                        if pref_periods and p[0] not in pref_periods:
+                            penalty_terms.append(v)
     if penalty_terms:
         model.Minimize(sum(penalty_terms))
 
@@ -109,16 +152,17 @@ def solve() -> List[Dict[str, int]]:
     schedule: List[Dict[str, int]] = []
     for key, var in vars.items():
         if solver.Value(var):
-            assignments.append(key)
+            # key: (section_id, meeting_idx, teacher_id, facility_id, period_id)
+            sec_id, _m, teacher_id, facility_id, period_id = key
+            assignments.append((sec_id, teacher_id, facility_id, period_id))
             schedule.append(
                 {
-                    "class_section_id": key[0],
-                    "teacher_id": key[1],
-                    "facility_id": key[2],
-                    "time_period_id": key[3],
+                    "class_section_id": sec_id,
+                    "teacher_id": teacher_id,
+                    "facility_id": facility_id,
+                    "time_period_id": period_id,
                 }
             )
 
     persist_schedule(assignments)
     return schedule
-
