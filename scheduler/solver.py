@@ -12,6 +12,7 @@ from repository import (
     fetch_teachers,
     fetch_teacher_course_map,
     fetch_international_teacher_ids,
+    fetch_courses_require_consecutive,
     persist_schedule,
 )
 from scheduler.utils import coerce_json
@@ -28,6 +29,7 @@ def solve() -> List[Dict[str, int]]:
     eligibility_map = fetch_teacher_course_map()  # course_id -> {teacher_id}
     has_eligibility = bool(eligibility_map)
     international_teachers = fetch_international_teacher_ids()
+    courses_need_double = fetch_courses_require_consecutive()
 
     model = cp_model.CpModel()
 
@@ -170,6 +172,69 @@ def solve() -> List[Dict[str, int]]:
                         v = vars[(sec_id, m, t[0], f[0], p[0])]
                         if pref_periods and p[0] not in pref_periods:
                             penalty_terms.append(v)
+    # soft constraint: prefer at least one double-period for courses that request it
+    # For each such section, encourage occupying two consecutive periods on the same day.
+    # Construct day->sorted period tuples for consecutive relationship checks
+    day_to_sorted: Dict[int, List[Tuple[int, int]]] = {}
+    for pid, pno, day in periods:
+        if day is None or pno is None:
+            continue
+        day_to_sorted.setdefault(day, []).append((pno, pid))
+    for day, items in day_to_sorted.items():
+        items.sort()
+
+    # Helper to sum usage of a section in a given period id
+    def section_usage_in_period(sec_id: int, course_id: int, period_id: int):
+        return sum(
+            vars[(sec_id, m, t[0], f[0], period_id)]
+            for m in range(next(ppw for (sid, ppw, cid) in class_sections if sid == sec_id))
+            for t in (eligible_teachers(course_id) if has_eligibility else teachers)
+            for f in facilities
+            if (not has_eligibility)
+            or (t[0] in eligibility_map.get(course_id, set()))
+            or (course_id not in eligibility_map)
+        )
+
+    # Build double-period encouragement terms
+    for (sec_id, ppw, course_id) in class_sections:
+        if course_id not in courses_need_double or ppw < 2:
+            continue
+        y_pairs = []
+        # For each day, consider consecutive period-number neighbors
+        for day, items in day_to_sorted.items():
+            if len(items) < 2:
+                continue
+            for idx in range(len(items) - 1):
+                (pno_a, pid_a) = items[idx]
+                (pno_b, pid_b) = items[idx + 1]
+                if pno_b != pno_a + 1:
+                    # Not consecutive numbers; skip
+                    continue
+                # y_pair indicates section occupies both pid_a and pid_b (any meetings)
+                y_pair = model.NewBoolVar(f"sec{sec_id}_double_d{day}_p{pid_a}_{pid_b}")
+                use_a = section_usage_in_period(sec_id, course_id, pid_a)
+                use_b = section_usage_in_period(sec_id, course_id, pid_b)
+                # y <= use_a and y <= use_b; y >= use_a + use_b - 1
+                model.Add(y_pair <= use_a)
+                model.Add(y_pair <= use_b)
+                model.Add(y_pair >= use_a + use_b - 1)
+                y_pairs.append(y_pair)
+
+        has_double = model.NewBoolVar(f"sec{sec_id}_has_double")
+        if y_pairs:
+            # has_double is OR of y_pairs
+            for y in y_pairs:
+                model.Add(y <= has_double)
+            model.Add(has_double <= sum(y_pairs))
+        else:
+            # No candidate adjacent pairs in calendar; force false
+            model.Add(has_double == 0)
+
+        # Penalize missing a double-period
+        miss_double = model.NewBoolVar(f"sec{sec_id}_miss_double")
+        model.Add(has_double + miss_double == 1)
+        penalty_terms.append(miss_double)
+
     if penalty_terms:
         model.Minimize(sum(penalty_terms))
 

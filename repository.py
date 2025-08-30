@@ -93,6 +93,22 @@ def fetch_international_teacher_ids() -> Set[int]:
         conn.close()
 
 
+def fetch_courses_require_consecutive() -> Set[int]:
+    """Return the set of course IDs that prefer consecutive periods.
+
+    Courses with ``requires_consecutive_periods = TRUE`` will be included.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM courses WHERE requires_consecutive_periods = TRUE"
+            )
+            return {row[0] for row in cur.fetchall()}
+    finally:
+        conn.close()
+
+
 def fetch_student_ids() -> List[int]:
     """Return all student IDs."""
     conn = get_connection()
@@ -150,11 +166,50 @@ def persist_schedule(assignments: List[Assignment]) -> None:
     try:
         with conn:
             with conn.cursor() as cur:
+                # Insert classes and enroll students, tracking created rows per section
+                created_by_section: Dict[int, List[Tuple[int, int]]] = {}
                 for class_id, teacher_id, facility_id, period_id in assignments:
                     scheduled_id = insert_scheduled_class(
                         cur, class_id, teacher_id, facility_id, period_id
                     )
                     bulk_enroll_students(cur, scheduled_id, student_ids)
+                    created_by_section.setdefault(class_id, []).append(
+                        (scheduled_id, period_id)
+                    )
+
+                # Map time_period_id -> (day_of_week, period_number)
+                cur.execute(
+                    "SELECT id, day_of_week, period_number FROM time_periods"
+                )
+                pmap: Dict[int, Tuple[int, int]] = {
+                    pid: (day, pno) for (pid, day, pno) in cur.fetchall()
+                }
+
+                # For each section, mark scheduled rows that are part of a same-day
+                # consecutive double-period pair
+                for section_id, items in created_by_section.items():
+                    # Group by day
+                    by_day: Dict[int, List[Tuple[int, int, int]]] = {}
+                    for sched_id, pid in items:
+                        day, pno = pmap[pid]
+                        by_day.setdefault(day, []).append((pno, pid, sched_id))
+
+                    to_mark: Set[int] = set()
+                    for day, arr in by_day.items():
+                        arr.sort()  # sort by period_number
+                        for i in range(len(arr) - 1):
+                            pno_a, pid_a, sid_a = arr[i]
+                            pno_b, pid_b, sid_b = arr[i + 1]
+                            if pno_b == pno_a + 1:
+                                to_mark.add(sid_a)
+                                to_mark.add(sid_b)
+
+                    # Update marked rows
+                    for sid in to_mark:
+                        cur.execute(
+                            "UPDATE scheduled_classes SET is_double_period=TRUE WHERE id=%s",
+                            (sid,),
+                        )
     finally:
         conn.close()
 
