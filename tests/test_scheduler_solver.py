@@ -5,6 +5,7 @@ from models.teachers import create_teacher
 from models.facilities import create_facility
 from models.time_periods import create_time_period
 from db import add_student, get_connection
+from repository import fetch_scheduled_classes
 
 
 def test_solver_returns_feasible_timetable():
@@ -26,18 +27,9 @@ def test_solver_returns_feasible_timetable():
     schedule = solve()
     assert len(schedule) == 2
 
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT class_section_id, teacher_id, facility_id, time_period_id FROM scheduled_classes ORDER BY class_section_id"
-            )
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-
+    rows = fetch_scheduled_classes()
     assert len(rows) == 2
-    for (class_id, teacher_id, facility_id, period_id) in rows:
+    for (_id, class_id, teacher_id, facility_id, period_id) in rows:
         if teacher_id == teacher1.id:
             assert period_id == period1.id
         if teacher_id == teacher2.id:

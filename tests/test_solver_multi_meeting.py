@@ -5,6 +5,7 @@ from models.teachers import create_teacher
 from models.courses import create_course
 from models.class_sections import create_class_section
 from db import add_student, get_connection
+from repository import fetch_scheduled_classes
 
 
 def test_solver_schedules_multiple_meetings_for_section():
@@ -35,18 +36,8 @@ def test_solver_schedules_multiple_meetings_for_section():
     assert len(schedule) == 2
 
     # Verify two persisted rows for the section in distinct periods
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT time_period_id FROM scheduled_classes WHERE class_section_id=%s",
-                (section.id,),
-            )
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-
+    rows = fetch_scheduled_classes(section_id=section.id)
     assert len(rows) == 2
-    period_ids = {r[0] for r in rows}
+    # (id, class_section_id, teacher_id, facility_id, time_period_id)
+    period_ids = {r[4] for r in rows}
     assert len(period_ids) == 2
-

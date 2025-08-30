@@ -5,6 +5,7 @@ from models.teachers import create_teacher
 from models.courses import create_course
 from models.class_sections import create_class_section
 from db import add_student, get_connection
+from repository import fetch_scheduled_classes
 
 
 def test_solver_respects_teacher_course_eligibility():
@@ -46,17 +47,7 @@ def test_solver_respects_teacher_course_eligibility():
     solve()
 
     # Verify scheduled teacher is the allowed one
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT teacher_id FROM scheduled_classes WHERE class_section_id=%s",
-                (section.id,),
-            )
-            rows = cur.fetchall()
-    finally:
-        conn.close()
-
+    rows = fetch_scheduled_classes(section_id=section.id)
     assert len(rows) == 1
-    assert rows[0][0] == t_allowed.id
-
+    # (id, class_section_id, teacher_id, facility_id, time_period_id)
+    assert rows[0][2] == t_allowed.id
