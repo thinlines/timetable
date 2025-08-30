@@ -11,6 +11,7 @@ from repository import (
     fetch_periods,
     fetch_teachers,
     fetch_teacher_course_map,
+    fetch_international_teacher_ids,
     persist_schedule,
 )
 from scheduler.utils import coerce_json
@@ -23,9 +24,10 @@ def solve() -> List[Dict[str, int]]:
     class_sections: List[Tuple[int, int, int]] = fetch_class_sections()
     teachers = fetch_teachers()
     facilities = fetch_facilities()
-    periods = fetch_periods()
+    periods = fetch_periods()  # (id, period_number, day_of_week)
     eligibility_map = fetch_teacher_course_map()  # course_id -> {teacher_id}
     has_eligibility = bool(eligibility_map)
+    international_teachers = fetch_international_teacher_ids()
 
     model = cp_model.CpModel()
 
@@ -42,15 +44,36 @@ def solve() -> List[Dict[str, int]]:
     # Decision vars include a meeting index m in [0, periods_per_week)
     # Key: (section_id, meeting_idx, teacher_id, facility_id, period_id)
     vars: Dict[Tuple[int, int, int, int, int], cp_model.IntVar] = {}
+    forbidden_vars: List[cp_model.IntVar] = []
+
+    # Precompute first/last period numbers for each day
+    day_bounds: Dict[int, Tuple[int, int]] = {}
+    for _id, period_no, day in periods:
+        if day is None or period_no is None:
+            # If missing metadata, skip special handling
+            continue
+        lo, hi = day_bounds.get(day, (period_no, period_no))
+        lo = min(lo, period_no)
+        hi = max(hi, period_no)
+        day_bounds[day] = (lo, hi)
     for (sec_id, ppw, course_id) in class_sections:
         elig_teachers = eligible_teachers(course_id)
         for m in range(ppw):
             for t in elig_teachers:
                 for f in facilities:
                     for p in periods:
-                        vars[(sec_id, m, t[0], f[0], p[0])] = model.NewBoolVar(
+                        key = (sec_id, m, t[0], f[0], p[0])
+                        v = model.NewBoolVar(
                             f"c{sec_id}_m{m}_t{t[0]}_f{f[0]}_p{p[0]}"
                         )
+                        vars[key] = v
+                        # Forbid international teachers from first/last period of the day
+                        if t[0] in international_teachers:
+                            _, pno, day = p
+                            if day in day_bounds:
+                                lo, hi = day_bounds[day]
+                                if pno in (lo, hi):
+                                    forbidden_vars.append(v)
 
     # Each meeting of each section scheduled exactly once
     for (sec_id, ppw, course_id) in class_sections:
@@ -166,3 +189,6 @@ def solve() -> List[Dict[str, int]]:
 
     persist_schedule(assignments)
     return schedule
+    # Apply forbidden variable constraints
+    for v in forbidden_vars:
+        model.Add(v == 0)
