@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Optional
 
 from db import get_connection
 
@@ -52,12 +52,12 @@ def fetch_facilities() -> List[Tuple[int]]:
         conn.close()
 
 
-def fetch_periods() -> List[Tuple[int]]:
-    """Return all time period IDs."""
+def fetch_periods() -> List[Tuple[int, int, int]]:
+    """Return all time periods as (id, period_number, day_of_week)."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM time_periods")
+            cur.execute("SELECT id, period_number, day_of_week FROM time_periods")
             return cur.fetchall()
     finally:
         conn.close()
@@ -80,6 +80,17 @@ def fetch_teacher_course_map() -> Dict[int, Set[int]]:
     finally:
         conn.close()
     return mapping
+
+
+def fetch_international_teacher_ids() -> Set[int]:
+    """Return the set of teacher IDs marked as international."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM teachers WHERE is_international = TRUE")
+            return {row[0] for row in cur.fetchall()}
+    finally:
+        conn.close()
 
 
 def fetch_student_ids() -> List[int]:
@@ -144,5 +155,33 @@ def persist_schedule(assignments: List[Assignment]) -> None:
                         cur, class_id, teacher_id, facility_id, period_id
                     )
                     bulk_enroll_students(cur, scheduled_id, student_ids)
+    finally:
+        conn.close()
+
+
+def fetch_scheduled_classes(
+    section_id: Optional[int] = None,
+) -> List[Tuple[int, int, int, int, int]]:
+    """
+    Return scheduled classes.
+
+    Shape per row: (id, class_section_id, teacher_id, facility_id, time_period_id)
+    Optionally filter by class_section_id.
+    """
+    sql = (
+        "SELECT id, class_section_id, teacher_id, facility_id, time_period_id "
+        "FROM scheduled_classes"
+    )
+    params: Tuple = ()
+    if section_id is not None:
+        sql += " WHERE class_section_id=%s"
+        params = (section_id,)
+    sql += " ORDER BY class_section_id, time_period_id, id"
+
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
     finally:
         conn.close()
