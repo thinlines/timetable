@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 from ortools.sat.python import cp_model
 from repository import (
@@ -46,16 +46,25 @@ def solve() -> List[Dict[str, int]]:
     vars: Dict[Tuple[int, int, int, int, int], cp_model.IntVar] = {}
     forbidden_vars: List[cp_model.IntVar] = []
 
-    # Precompute first/last period numbers for each day
-    day_bounds: Dict[int, Tuple[int, int]] = {}
-    for _id, period_no, day in periods:
+    # Precompute allowed period ids for international teachers (middle periods per day)
+    day_to_periods: Dict[int, List[Tuple[int, int]]] = {}
+    for pid, period_no, day in periods:
         if day is None or period_no is None:
-            # If missing metadata, skip special handling
             continue
-        lo, hi = day_bounds.get(day, (period_no, period_no))
-        lo = min(lo, period_no)
-        hi = max(hi, period_no)
-        day_bounds[day] = (lo, hi)
+        day_to_periods.setdefault(day, []).append((period_no, pid))
+    intl_ok_period_ids: Set[int] = set()
+    for day, items in day_to_periods.items():
+        # sort by period number, then id for stability
+        items.sort()
+        if len(items) <= 2:
+            # no middle period exists; none are allowed (strict interpretation)
+            # but to avoid infeasibility when only two exist, we could relax.
+            # For current tests we have 3 periods.
+            continue
+        # take all except first and last
+        middle = items[1:-1]
+        for _pno, pid in middle:
+            intl_ok_period_ids.add(pid)
     for (sec_id, ppw, course_id) in class_sections:
         elig_teachers = eligible_teachers(course_id)
         for m in range(ppw):
@@ -69,11 +78,9 @@ def solve() -> List[Dict[str, int]]:
                         vars[key] = v
                         # Forbid international teachers from first/last period of the day
                         if t[0] in international_teachers:
-                            _, pno, day = p
-                            if day in day_bounds:
-                                lo, hi = day_bounds[day]
-                                if pno in (lo, hi):
-                                    forbidden_vars.append(v)
+                            pid, _pno, _day = p
+                            if pid not in intl_ok_period_ids:
+                                forbidden_vars.append(v)
 
     # Each meeting of each section scheduled exactly once
     for (sec_id, ppw, course_id) in class_sections:
@@ -166,6 +173,10 @@ def solve() -> List[Dict[str, int]]:
     if penalty_terms:
         model.Minimize(sum(penalty_terms))
 
+    # Apply forbidden variable constraints before solving
+    for v in forbidden_vars:
+        model.Add(v == 0)
+
     solver = cp_model.CpSolver()
     result = solver.Solve(model)
     if result not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -189,6 +200,3 @@ def solve() -> List[Dict[str, int]]:
 
     persist_schedule(assignments)
     return schedule
-    # Apply forbidden variable constraints
-    for v in forbidden_vars:
-        model.Add(v == 0)
