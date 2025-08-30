@@ -1,18 +1,28 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from db import get_connection
 
 Assignment = Tuple[int, int, int, int]
 
 
-def fetch_class_sections() -> List[Tuple[int]]:
-    """Return all class section IDs."""
+def fetch_class_sections() -> List[Tuple[int, int, int]]:
+    """
+    Return class sections with their required meetings and course linkage.
+
+    Shape: (section_id, periods_per_week, course_id)
+    """
     conn = get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM class_sections")
+            cur.execute(
+                """
+                SELECT cs.id, c.periods_per_week, cs.course_id
+                FROM class_sections cs
+                JOIN courses c ON c.id = cs.course_id
+                """
+            )
             return cur.fetchall()
     finally:
         conn.close()
@@ -51,6 +61,25 @@ def fetch_periods() -> List[Tuple[int]]:
             return cur.fetchall()
     finally:
         conn.close()
+
+
+def fetch_teacher_course_map() -> Dict[int, Set[int]]:
+    """Return mapping of course_id -> set of eligible teacher_ids.
+
+    If the table is empty, callers may choose to treat all teachers as eligible.
+    """
+    conn = get_connection()
+    mapping: Dict[int, Set[int]] = {}
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT teacher_id, course_id FROM teacher_courses")
+            for teacher_id, course_id in cur.fetchall():
+                if course_id not in mapping:
+                    mapping[course_id] = set()
+                mapping[course_id].add(teacher_id)
+    finally:
+        conn.close()
+    return mapping
 
 
 def fetch_student_ids() -> List[int]:
